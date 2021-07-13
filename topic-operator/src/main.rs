@@ -1,25 +1,24 @@
 mod controller;
 mod data;
 mod endpoints;
-mod ttn;
-mod utils;
 
+use crate::controller::ControllerConfig;
 use actix_web::{
     get, middleware,
     web::{self},
     App, HttpResponse, HttpServer, Responder,
 };
-use anyhow::anyhow;
+use anyhow::Context;
 use dotenv::dotenv;
 use drogue_client::registry;
 use drogue_cloud_service_common::{
     config::ConfigFromEnv,
     defaults,
-    endpoints::create_endpoint_source,
     health::{HealthServer, HealthServerConfig},
     openid::TokenConfig,
 };
 use futures::TryFutureExt;
+use kube::{api::GroupVersionKind, core::DynamicObject, discovery, Api};
 use serde::Deserialize;
 use serde_json::json;
 use url::Url;
@@ -37,6 +36,8 @@ struct Config {
 
     #[serde(default)]
     pub health: HealthServerConfig,
+
+    pub controller: ControllerConfig,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -70,18 +71,22 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_env()?;
     let max_json_payload_size = config.max_json_payload_size;
 
-    let endpoint_source = create_endpoint_source()?;
-    let endpoints = endpoint_source.eval_endpoints().await?;
+    let kube = kube::client::Client::try_default()
+        .await
+        .context("Failed to create Kubernetes client")?;
 
-    let endpoint_url = endpoints
-        .http
-        .map(|http| http.url)
-        .ok_or_else(|| anyhow!("Missing HTTP endpoint information"))
-        .and_then(|url| Ok(Url::parse(&url)?))?
-        .join("/ttn/v3")?;
+    // TODO: discover version too
+    let gvk = GroupVersionKind::gvk("kafka.strimzi.io", "v1beta2", "KafkaTopic");
+    let (kafka_topic_resource, _caps) = discovery::pinned_kind(&kube, &gvk).await?;
+    let kafka_topics = Api::<DynamicObject>::namespaced_with(
+        kube,
+        &config.controller.topic_namespace,
+        &kafka_topic_resource,
+    );
 
     let client = reqwest::Client::new();
     let controller = controller::Controller::new(
+        config.controller,
         registry::v1::Client::new(
             client.clone(),
             config.registry.url,
@@ -92,8 +97,8 @@ async fn main() -> anyhow::Result<()> {
                     .await?,
             ),
         ),
-        ttn::Client::new(client),
-        endpoint_url,
+        kafka_topic_resource,
+        kafka_topics,
     );
 
     let data = web::Data::new(WebData { controller });

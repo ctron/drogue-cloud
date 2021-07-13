@@ -1,0 +1,15 @@
+[package]
+name = "drogue-cloud-operator-common"
+version = "0.6.0"
+authors = ["Jens Reimann <jreimann@redhat.com>"]
+edition = "2018"
+
+[dependencies]
+async-trait = "0.1"
+log = "0.4"
+thiserror = "1"
+
+serde = { version = "1", optional = true }
+serde_json = { version = "1", optional = true }
+reqwest = { version = "0.11", optional = true }
+kube = { version = "0.58", optional = true }

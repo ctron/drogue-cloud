@@ -1,4 +1,4 @@
-use crate::error::ReconcileError;
+use drogue_cloud_operator_common::controller::reconciler::ReconcileError;
 use lazy_static::lazy_static;
 use reqwest::{RequestBuilder, Response, StatusCode};
 use serde::de::MapAccess;

@@ -1,7 +1,6 @@
-use crate::error::ReconcileError;
-use crate::ttn;
-use crate::ttn::Owner;
+use crate::ttn::{self, Owner};
 use drogue_client::{dialect, Dialect, Section};
+use drogue_cloud_operator_common::controller::reconciler::ReconcileError;
 use serde::{Deserialize, Serialize};
 use url::Url;
 

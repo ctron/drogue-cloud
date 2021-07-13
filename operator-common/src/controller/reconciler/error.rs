@@ -17,15 +17,27 @@ impl ReconcileError {
     }
 }
 
+#[cfg(feature = "reqwest")]
 impl From<reqwest::Error> for ReconcileError {
     fn from(err: reqwest::Error) -> Self {
         Self::permanent(err)
     }
 }
 
+#[cfg(feature = "serde_json")]
 impl From<serde_json::Error> for ReconcileError {
     fn from(err: serde_json::Error) -> Self {
         Self::permanent(err)
+    }
+}
+
+#[cfg(feature = "kube")]
+impl From<kube::Error> for ReconcileError {
+    fn from(err: kube::Error) -> Self {
+        match err {
+            kube::Error::Connection(_) => Self::temporary(err),
+            _ => Self::permanent(err),
+        }
     }
 }
 

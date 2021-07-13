@@ -41,7 +41,7 @@ drogue-cloud-integration-common = { path = "../integration-common" }
 drogue-cloud-service-common = { path = "../service-common" }
 drogue-cloud-service-api = { path = "../service-api" }
 
-drogue-client = "0.6.0"
+drogue-client = "0.7.0"
 
 jsonwebtokens = "1.0.0-alpha.13"
 base64 = "0.13"

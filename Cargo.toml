@@ -20,7 +20,9 @@ members = [
     "user-auth-service",
     "integration-common",
     "mqtt-integration",
+    "operator-common",
     "ttn-operator",
+    "topic-operator",
     "api-key-service",
     "admin-service",
 ]
@@ -28,18 +30,14 @@ members = [
 [patch.crates-io]
 testcontainers = { git = "https://github.com/testcontainers/testcontainers-rs", rev = "fe51e06fb2c44b1d3e3fd627cedea3fd582487ef" }
 
-# required due to missing new release: https://github.com/siku2/rust-monaco/issues/6
-#monaco = { git = "https://github.com/siku2/rust-monaco", rev = "97ab5155dd0043843434982922b78bb5fea328fa" }
-#monaco = { git = "https://github.com/ctron/rust-monaco", rev = "0564f7f7c222445a238cf8a078ef90336ea4c0fe" }
-#monaco = { path = "../rust-monaco" }
-
 #patternfly-yew = { git = "https://github.com/ctron/patternfly-yew", rev = "8acec63f62f66878337c41899ba2fda75c6807f5" }
 #patternfly-yew = { path = "../patternfly-yew" }
 
 #reqwest = { git = "https://github.com/ctron/reqwest", branch = "feature/basic_auth_wasm_1" }
 #drogue-ttn = { git = "https://github.com/drogue-iot/drogue-ttn", rev = "1898ac0a6af51dc3a99c9f291049e3fd993c69c6"}
 
-#drogue-client = { git = "https://github.com/drogue-iot/drogue-client", rev = "7c7fd3a1bb0a747ef190e3495519d42a0c705363" }
+drogue-client = { git = "https://github.com/drogue-iot/drogue-client", rev = "9520f636a9a392d9b4ee6e78f41a9edfb09237bc" }
+operator-framework = { git = "https://github.com/ctron/operator-framework", rev = "12b889e208c86ae50bb6d9a9cfc327aa5083f2bc" }
 #drogue-client = { path = "../drogue-client" }
 
 # required due to missing "beta" versions of more recent "beta" actix versions

@@ -1,20 +1,15 @@
 mod app;
 mod device;
-mod reconciler;
 
 use app::*;
 use device::*;
 
-use crate::controller::reconciler::ReconcileProcessor;
 use crate::{
     data::{TtnAppSpec, TtnAppStatus, TtnDeviceStatus, TtnReconcileStatus},
-    error::ReconcileError,
     ttn,
 };
-use drogue_client::{
-    meta::{self, v1::CommonMetadataMut},
-    registry, Translator,
-};
+use drogue_client::{meta, registry, Translator};
+use drogue_cloud_operator_common::controller::reconciler::{ReconcileError, ReconcileProcessor};
 use url::Url;
 
 pub struct Controller {
@@ -106,20 +101,6 @@ impl Controller {
         }
 
         Ok(())
-    }
-
-    /// ensures that the finalizer is set
-    ///
-    /// Returns `true` if the finalizer was added and the resource must be stored
-    pub fn ensure_finalizer(meta: &mut dyn CommonMetadataMut) -> bool {
-        if !meta.finalizers().iter().any(|r| r == "ttn") {
-            let mut finalizers = meta.finalizers().clone();
-            finalizers.push("ttn".into());
-            meta.set_finalizers(finalizers);
-            true
-        } else {
-            false
-        }
     }
 
     /// Ensure that the app ID did not change.

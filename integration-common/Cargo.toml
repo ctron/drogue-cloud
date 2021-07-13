@@ -32,7 +32,7 @@ drogue-cloud-service-api = { path = "../service-api" }
 drogue-cloud-service-common = { path = "../service-common" }
 drogue-cloud-endpoint-common = { path = "../endpoint-common" }
 
-drogue-client = "0.6.0"
+drogue-client = "0.7.0"
 
 actix = { version = "0.11.0", optional = true }
 actix-http = { version = "=3.0.0-beta.5", optional = true }

@@ -1,16 +1,17 @@
 use super::Controller;
 use crate::{
-    controller::reconciler::{ReconcileState, Reconciler},
     data::*,
-    error::ReconcileError,
     ttn::{self},
     utils,
 };
 use actix_http::http::header::IntoHeaderValue;
 use actix_web_httpauth::headers::authorization::Basic;
 use async_trait::async_trait;
-use drogue_client::registry::v1::Password;
+use drogue_client::meta::v1::CommonMetadataMut;
 use drogue_client::{meta, registry, Translator};
+use drogue_cloud_operator_common::controller::reconciler::{
+    ReconcileError, ReconcileState, Reconciler,
+};
 use maplit::{convert_args, hashmap};
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -82,7 +83,7 @@ impl<'a> Reconciler for ApplicationReconciler<'a> {
 
         // ensure we have a finalizer
 
-        if Controller::ensure_finalizer(&mut ctx.app.metadata) {
+        if ctx.app.metadata.ensure_finalizer(FINALIZER) {
             // early return
             return Ok(ctx.app);
         }
@@ -242,14 +243,14 @@ impl<'a> ApplicationReconciler<'a> {
 
         // if we could not find a password, create one
 
-        let password = if let Some(Password::Plain(password)) = password {
+        let password = if let Some(registry::v1::Password::Plain(password)) = password {
             password
         } else {
             let password = utils::random_password();
             gateway.set_section(registry::v1::DeviceSpecCredentials {
-                credentials: vec![registry::v1::Credential::Password(Password::Plain(
-                    password.clone(),
-                ))],
+                credentials: vec![registry::v1::Credential::Password(
+                    registry::v1::Password::Plain(password.clone()),
+                )],
             })?;
             password
         };

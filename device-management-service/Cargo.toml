@@ -44,7 +44,7 @@ drogue-cloud-service-api = { path = "../service-api", features = ["with_actix"] 
 drogue-cloud-registry-events = { path = "../registry-events" }
 drogue-cloud-admin-service = { path = "../admin-service"  }
 
-drogue-client = "0.6.0"
+drogue-client = "0.7.0"
 
 deadpool = "0.7"
 deadpool-postgres = { version = "0.7", features = ["config"] }

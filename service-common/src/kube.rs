@@ -11,5 +11,5 @@ fn namespace_from_env() -> Option<String> {
 fn namespace_from_cluster() -> Option<String> {
     kube::Config::from_cluster_env()
         .ok()
-        .map(|cfg| cfg.default_ns)
+        .map(|cfg| cfg.default_namespace)
 }

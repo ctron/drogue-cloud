@@ -54,7 +54,7 @@ openid = "0.9"
 
 drogue-cloud-service-api = { path = "../service-api" }
 drogue-cloud-service-common = { path = "../service-common" }
-drogue-client = "0.6.0"
+drogue-client = "0.7.0"
 
 x509-parser = "0.9"
 

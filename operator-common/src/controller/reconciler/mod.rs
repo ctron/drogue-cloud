@@ -1,4 +1,7 @@
-use crate::error::ReconcileError;
+mod error;
+
+pub use error::*;
+
 use async_trait::async_trait;
 use core::fmt::{Debug, Formatter};
 

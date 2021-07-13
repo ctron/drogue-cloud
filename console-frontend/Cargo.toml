@@ -13,7 +13,7 @@ anyhow = "1"
 
 drogue-cloud-console-common = { path = "../console-common" }
 drogue-cloud-service-api = { path = "../service-api" }
-drogue-client = { version = "0.6.0", default-features = false }
+drogue-client = { version = "0.7.0", default-features = false }
 
 yew = "0.17"
 yew-router = "0.14"

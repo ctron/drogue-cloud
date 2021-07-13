@@ -1,10 +1,6 @@
 use crate::{config::ConfigFromEnv, defaults};
 use async_trait::async_trait;
 use drogue_cloud_service_api::endpoints::*;
-use futures::{stream::FuturesUnordered, StreamExt};
-use k8s_openapi::api::networking::v1beta1::Ingress;
-use kube::{Api, Client};
-use openshift_openapi::api::route::v1::Route;
 use serde::Deserialize;
 use std::fmt::Debug;
 
@@ -59,7 +55,6 @@ pub async fn eval_endpoints() -> anyhow::Result<Endpoints> {
 pub fn create_endpoint_source() -> anyhow::Result<EndpointSourceType> {
     let source = std::env::var_os("ENDPOINT_SOURCE").unwrap_or_else(|| "env".into());
     match source.to_str() {
-        Some("openshift") => Ok(Box::new(OpenshiftEndpointSource::new()?)),
         Some("env") => Ok(Box::new(EnvEndpointSource(amend_global_sso(
             EndpointConfig::from_env_prefix("ENDPOINTS")?,
         )))),
@@ -155,115 +150,4 @@ impl EndpointSource for EnvEndpointSource {
             local_certs: self.0.local_certs,
         })
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct OpenshiftEndpointSource {
-    namespace: String,
-}
-
-impl OpenshiftEndpointSource {
-    pub fn new() -> anyhow::Result<Self> {
-        Ok(Self {
-            namespace: namespace()?,
-        })
-    }
-}
-
-/// lookup a URL from a route
-async fn lookup_route(
-    routes: &Api<Route>,
-    label: String,
-    target: String,
-) -> anyhow::Result<(String, Option<String>)> {
-    let route = routes.get(&target).await?;
-    let url = url_from_route(&route);
-    Ok((label, url))
-}
-
-#[async_trait]
-impl EndpointSource for OpenshiftEndpointSource {
-    async fn eval_endpoints(&self) -> anyhow::Result<Endpoints> {
-        let client = Client::try_default().await?;
-        let routes: Api<Route> = Api::namespaced(client.clone(), &self.namespace);
-        let ingress: Api<Ingress> = Api::namespaced(client.clone(), &self.namespace);
-
-        let mqtt = host_from_route(&routes.get("mqtt-endpoint").await?);
-        let mqtt_integration = host_from_route(&routes.get("mqtt-integration").await?);
-        let http = url_from_route(&routes.get("http-endpoint").await?);
-        let command = url_from_route(&routes.get("command-endpoint").await?);
-        let sso = url_from_route(&routes.get("keycloak").await?);
-        let api = url_from_ingress(&ingress.get("api").await?);
-        let frontend = url_from_route(&routes.get("console").await?);
-        let registry = url_from_route(&routes.get("registry").await?);
-
-        let demos = get_demos()
-            .iter()
-            .map(|(label, target)| lookup_route(&routes, label.clone(), target.clone()))
-            .collect::<FuturesUnordered<_>>()
-            .filter_map(|r: Result<(String, Option<String>), anyhow::Error>| async {
-                // silently filter out errors
-                match r {
-                    Ok((label, Some(url))) => Some((label, url)),
-                    _ => None,
-                }
-            })
-            .collect::<Vec<_>>()
-            .await;
-
-        let result = Endpoints {
-            http: http.map(|url| HttpEndpoint { url }),
-            mqtt: mqtt.map(|mqtt| MqttEndpoint {
-                host: mqtt,
-                port: 443,
-            }),
-            mqtt_integration: mqtt_integration.map(|mqtt| MqttEndpoint {
-                host: mqtt,
-                port: 443,
-            }),
-            issuer_url: sso
-                .as_ref()
-                .map(|sso| crate::utils::sso_to_issuer_url(&sso, DEFAULT_REALM)),
-            command_url: command,
-            api,
-            sso,
-            redirect_url: frontend.clone(),
-            console: frontend,
-            registry: registry.map(|url| RegistryEndpoint { url }),
-            demos,
-            local_certs: false,
-        };
-
-        Ok(result)
-    }
-}
-
-fn namespace() -> anyhow::Result<String> {
-    crate::kube::namespace()
-        .ok_or_else(|| anyhow::anyhow!("Missing namespace. Consider setting 'NAMESPACE' variable"))
-}
-
-fn host_from_route(route: &Route) -> Option<String> {
-    route
-        .status
-        .ingress
-        .iter()
-        .find_map(|ingress| ingress.host.clone())
-}
-
-fn url_from_route(route: &Route) -> Option<String> {
-    host_from_route(route).map(|host| format!("https://{}", host))
-}
-
-fn host_from_ingress(ingress: &Ingress) -> Option<String> {
-    ingress
-        .spec
-        .as_ref()
-        .and_then(|s| s.rules.as_ref())
-        .and_then(|r| r.into_iter().next())
-        .and_then(|r| r.host.clone())
-}
-
-fn url_from_ingress(ingress: &Ingress) -> Option<String> {
-    host_from_ingress(ingress).map(|host| format!("https://{}", host))
 }

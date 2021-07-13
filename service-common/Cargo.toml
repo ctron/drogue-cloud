@@ -41,15 +41,12 @@ async-std = "1.9"
 async-trait = "0.1"
 futures = "0.3"
 
-kube = "0.51"
-kube-derive = "0.51"
-k8s-openapi = { version = "0.11", features = ["v1_17"] }
-openshift-openapi = { version = "0.3", features = ["v4_4"] }
+kube = "0.58"
 
 cloudevents-sdk = "0.4"
 
 drogue-cloud-service-api = { path = "../service-api" }
-drogue-client = "0.6.0"
+drogue-client = "0.7.0"
 
 [dev-dependencies]
 env_logger = "0.8"

@@ -1,8 +1,10 @@
 use super::Controller;
-use crate::controller::reconciler::{ReconcileState, Reconciler};
-use crate::{data::*, error::ReconcileError, ttn};
+use crate::{data::*, ttn};
 use async_trait::async_trait;
+use drogue_client::meta::v1::CommonMetadataMut;
 use drogue_client::{meta, registry, Dialect, Translator};
+use drogue_cloud_operator_common::controller::reconciler::ReconcileError;
+use drogue_cloud_operator_common::controller::reconciler::{ReconcileState, Reconciler};
 use maplit::{convert_args, hashmap};
 
 const FINALIZER: &str = "ttn";
@@ -80,7 +82,7 @@ impl<'a> Reconciler for DeviceReconciler<'a> {
     }
 
     async fn construct(&self, mut ctx: Self::Construct) -> Result<Self::Output, ReconcileError> {
-        if Controller::ensure_finalizer(&mut ctx.device.metadata) {
+        if ctx.device.metadata.ensure_finalizer(FINALIZER) {
             // early return
             return Ok(ctx.device);
         }

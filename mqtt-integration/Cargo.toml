@@ -49,7 +49,7 @@ drogue-cloud-endpoint-common = { path = "../endpoint-common" }
 drogue-cloud-service-api = { path = "../service-api" }
 drogue-cloud-service-common = { path = "../service-common" }
 drogue-cloud-integration-common = { path = "../integration-common" }
-drogue-client = "0.6.0"
+drogue-client = "0.7.0"
 
 [dependencies.open-ssl]
 version = "0.10"

@@ -7,7 +7,7 @@ all: build test
 CURRENT_DIR ?= $(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 TOP_DIR ?= $(CURRENT_DIR)
 IMAGE_TAG ?= latest
-BUILDER_IMAGE ?= ghcr.io/drogue-iot/builder:0.1.8
+BUILDER_IMAGE ?= ghcr.io/drogue-iot/builder:0.1.9
 
 MODULE:=$(basename $(shell realpath --relative-to $(TOP_DIR) $(CURRENT_DIR)))
 
@@ -41,6 +41,7 @@ ALL_IMAGES=\
 	user-auth-service \
 	mqtt-integration \
 	ttn-operator \
+	topic-operator \
 
 
 #
