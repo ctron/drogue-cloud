@@ -15,7 +15,7 @@ impl From<Event> for OutboxEntry {
                 path,
                 generation,
             } => OutboxEntry {
-                instance: instance,
+                instance,
                 app: application,
                 device: None,
                 uid,
@@ -30,7 +30,7 @@ impl From<Event> for OutboxEntry {
                 path,
                 generation,
             } => OutboxEntry {
-                instance: instance,
+                instance,
                 app: application,
                 device: Some(device),
                 uid,
