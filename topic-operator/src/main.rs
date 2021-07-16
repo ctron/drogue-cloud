@@ -2,6 +2,9 @@ mod controller;
 mod data;
 mod endpoints;
 
+use crate::controller::base::{
+    ApplicationController, BaseController, EventSource, FnEventProcessor,
+};
 use crate::controller::ControllerConfig;
 use actix_web::{
     get, middleware,
@@ -11,6 +14,7 @@ use actix_web::{
 use anyhow::Context;
 use dotenv::dotenv;
 use drogue_client::registry;
+use drogue_cloud_registry_events::Event;
 use drogue_cloud_service_common::{
     config::ConfigFromEnv,
     defaults,
@@ -55,7 +59,8 @@ impl Default for RegistryConfig {
 }
 
 pub struct WebData {
-    pub controller: controller::Controller,
+    // pub controller: controller::Controller,
+    pub processor: BaseController<String, ApplicationController>,
 }
 
 #[get("/")]
@@ -85,23 +90,32 @@ async fn main() -> anyhow::Result<()> {
     );
 
     let client = reqwest::Client::new();
+
+    let registry = registry::v1::Client::new(
+        client.clone(),
+        config.registry.url,
+        Some(
+            TokenConfig::from_env_prefix("REGISTRY")?
+                .amend_with_env()
+                .discover_from(client.clone())
+                .await?,
+        ),
+    );
+
     let controller = controller::Controller::new(
         config.controller,
-        registry::v1::Client::new(
-            client.clone(),
-            config.registry.url,
-            Some(
-                TokenConfig::from_env_prefix("REGISTRY")?
-                    .amend_with_env()
-                    .discover_from(client.clone())
-                    .await?,
-            ),
-        ),
+        registry.clone(),
         kafka_topic_resource,
         kafka_topics,
     );
 
-    let data = web::Data::new(WebData { controller });
+    // controller
+
+    let processor = BaseController::new(ApplicationController::new(registry));
+
+    // app data
+
+    let data = web::Data::new(WebData { processor });
 
     // health server
 

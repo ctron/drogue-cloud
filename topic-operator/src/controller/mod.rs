@@ -1,13 +1,17 @@
 mod app;
+pub mod base;
 
 use crate::{controller::app::ApplicationReconciler, data::KafkaAppStatus};
 use drogue_client::{core, registry, Translator};
-use drogue_cloud_operator_common::controller::reconciler::{ReconcileError, ReconcileProcessor};
+use drogue_cloud_operator_common::controller::reconciler::{
+    ReconcileError, ReconcileProcessor, ReconcilerOutcome,
+};
 use kube::{
     api::{ApiResource, DynamicObject},
     Api,
 };
 use serde::Deserialize;
+use std::time::Duration;
 
 const CONDITION_READY: &str = "KafkaReady";
 
@@ -43,7 +47,10 @@ impl Controller {
         }
     }
 
-    pub async fn handle_app_event(&self, app: String) -> Result<(), anyhow::Error> {
+    pub async fn handle_app_event(
+        &self,
+        app: String,
+    ) -> Result<Option<Option<Duration>>, anyhow::Error> {
         log::info!("Application changed: {}", app);
 
         let app = self.registry.get_app(&app, Default::default()).await?;
@@ -59,23 +66,37 @@ impl Controller {
             .reconcile(app.clone())
             .await
             .or_else::<ReconcileError, _>(|err| {
+                // this is a fatal error which cannot be recovered
+
                 log::info!("Failed to reconcile: {}", err);
                 let generation = app.metadata.generation;
-                app.update_section(|_: KafkaAppStatus| KafkaAppStatus::failed(generation, err))?;
+                app.update_section(|mut status: KafkaAppStatus| {
+                    status.observed_generation = generation;
+                    status.reason = Some(err.to_string());
+                    status.state = "Failed".to_string();
+                    status
+                })?;
                 app.update_section(|mut conditions: core::v1::Conditions| {
                     conditions.update(CONDITION_READY, core::v1::ConditionStatus::default());
                     conditions
                 })?;
 
-                Ok(app)
+                match err {
+                    ReconcileError::Temporary(_) => Ok(ReconcilerOutcome::Retry(app, None)),
+                    ReconcileError::Permanent(_) => Ok(ReconcilerOutcome::Complete(app)),
+                }
             })?;
             log::debug!("Storing: {:#?}", app);
-            self.registry.update_app(app, Default::default()).await?;
+
+            let (app, retry) = app.split();
+
+            self.registry.update_app(&app, Default::default()).await?;
+
+            Ok(retry)
         } else {
             // If the application is just gone, we can ignore this, as we have finalizers
             // to guard against this.
+            Ok(None)
         }
-
-        Ok(())
     }
 }

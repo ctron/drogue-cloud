@@ -36,8 +36,8 @@ testcontainers = { git = "https://github.com/testcontainers/testcontainers-rs", 
 #reqwest = { git = "https://github.com/ctron/reqwest", branch = "feature/basic_auth_wasm_1" }
 #drogue-ttn = { git = "https://github.com/drogue-iot/drogue-ttn", rev = "1898ac0a6af51dc3a99c9f291049e3fd993c69c6"}
 
-drogue-client = { git = "https://github.com/drogue-iot/drogue-client", rev = "9520f636a9a392d9b4ee6e78f41a9edfb09237bc" }
-operator-framework = { git = "https://github.com/ctron/operator-framework", rev = "12b889e208c86ae50bb6d9a9cfc327aa5083f2bc" }
+drogue-client = { git = "https://github.com/drogue-iot/drogue-client", rev = "0938c7fd8a7a41019651b21cbcda846e4a0d8b69" }
+operator-framework = { git = "https://github.com/ctron/operator-framework", rev = "b2b0fc88beca2deb07bad6a963d0d5322c9ddff8" }
 #drogue-client = { path = "../drogue-client" }
 
 # required due to missing "beta" versions of more recent "beta" actix versions

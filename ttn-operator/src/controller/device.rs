@@ -1,10 +1,13 @@
 use super::Controller;
 use crate::{data::*, ttn};
 use async_trait::async_trait;
-use drogue_client::meta::v1::CommonMetadataMut;
-use drogue_client::{meta, registry, Dialect, Translator};
-use drogue_cloud_operator_common::controller::reconciler::ReconcileError;
-use drogue_cloud_operator_common::controller::reconciler::{ReconcileState, Reconciler};
+use drogue_client::{
+    meta::{self, v1::CommonMetadataMut},
+    registry, Dialect, Translator,
+};
+use drogue_cloud_operator_common::controller::reconciler::{
+    ReconcileError, ReconcileState, Reconciler, ReconcilerOutcome,
+};
 use maplit::{convert_args, hashmap};
 
 const FINALIZER: &str = "ttn";
@@ -81,10 +84,13 @@ impl<'a> Reconciler for DeviceReconciler<'a> {
         })
     }
 
-    async fn construct(&self, mut ctx: Self::Construct) -> Result<Self::Output, ReconcileError> {
+    async fn construct(
+        &self,
+        mut ctx: Self::Construct,
+    ) -> Result<ReconcilerOutcome<Self::Output>, ReconcileError> {
         if ctx.device.metadata.ensure_finalizer(FINALIZER) {
             // early return
-            return Ok(ctx.device);
+            return Ok(ReconcilerOutcome::Retry(ctx.device, None));
         }
 
         let mut device_status: TtnDeviceStatus = ctx
@@ -118,7 +124,7 @@ impl<'a> Reconciler for DeviceReconciler<'a> {
 
         if self.ensure_gateway_for_device(&mut ctx.device).await? {
             // device was changed, need to store
-            return Ok(ctx.device);
+            return Ok(ReconcilerOutcome::Retry(ctx.device, None));
         }
 
         // ensure the device configuration
@@ -129,13 +135,13 @@ impl<'a> Reconciler for DeviceReconciler<'a> {
         device_status.reconcile = TtnReconcileStatus::reconciled(ctx.device.metadata.generation);
         ctx.device.set_section(device_status)?;
 
-        Ok(ctx.device)
+        Ok(ReconcilerOutcome::Complete(ctx.device))
     }
 
     async fn deconstruct(
         &self,
         mut ctx: Self::Deconstruct,
-    ) -> Result<Self::Output, ReconcileError> {
+    ) -> Result<ReconcilerOutcome<Self::Output>, ReconcileError> {
         // delete
 
         // remove the ttn-gateway mapping
@@ -172,7 +178,7 @@ impl<'a> Reconciler for DeviceReconciler<'a> {
 
         // done
 
-        Ok(ctx.device)
+        Ok(ReconcilerOutcome::Complete(ctx.device))
     }
 }
 

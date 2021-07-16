@@ -7,10 +7,12 @@ use crate::{
 use actix_http::http::header::IntoHeaderValue;
 use actix_web_httpauth::headers::authorization::Basic;
 use async_trait::async_trait;
-use drogue_client::meta::v1::CommonMetadataMut;
-use drogue_client::{meta, registry, Translator};
+use drogue_client::{
+    meta::{self, v1::CommonMetadataMut},
+    registry, Translator,
+};
 use drogue_cloud_operator_common::controller::reconciler::{
-    ReconcileError, ReconcileState, Reconciler,
+    ReconcileError, ReconcileState, Reconciler, ReconcilerOutcome,
 };
 use maplit::{convert_args, hashmap};
 use serde_json::{json, Value};
@@ -78,14 +80,17 @@ impl<'a> Reconciler for ApplicationReconciler<'a> {
         })
     }
 
-    async fn construct(&self, mut ctx: Self::Construct) -> Result<Self::Output, ReconcileError> {
+    async fn construct(
+        &self,
+        mut ctx: Self::Construct,
+    ) -> Result<ReconcilerOutcome<Self::Output>, ReconcileError> {
         // ensure
 
         // ensure we have a finalizer
 
         if ctx.app.metadata.ensure_finalizer(FINALIZER) {
             // early return
-            return Ok(ctx.app);
+            return Ok(ReconcilerOutcome::Retry(ctx.app, None));
         }
 
         // ensure we have a status section, and a stable app id
@@ -131,13 +136,13 @@ impl<'a> Reconciler for ApplicationReconciler<'a> {
 
         // done
 
-        Ok(ctx.app)
+        Ok(ReconcilerOutcome::Complete(ctx.app))
     }
 
     async fn deconstruct(
         &self,
         mut ctx: Self::Deconstruct,
-    ) -> Result<Self::Output, ReconcileError> {
+    ) -> Result<ReconcilerOutcome<Self::Output>, ReconcileError> {
         // delete
 
         if let Some(app_id) = ctx.status.as_ref().and_then(|s| s.app_id.as_ref()) {
@@ -154,7 +159,7 @@ impl<'a> Reconciler for ApplicationReconciler<'a> {
 
         // done
 
-        Ok(ctx.app)
+        Ok(ReconcilerOutcome::Complete(ctx.app))
     }
 }
 
@@ -321,7 +326,7 @@ impl<'a> ApplicationReconciler<'a> {
                 let password = self.ensure_gateway_config(app_id, &mut gateway, ctx)?;
 
                 self.registry
-                    .create_device(gateway, Default::default())
+                    .create_device(&gateway, Default::default())
                     .await
                     .map_err(ReconcileError::temporary)?;
 
@@ -333,7 +338,7 @@ impl<'a> ApplicationReconciler<'a> {
                 let password = self.ensure_gateway_config(app_id, &mut gateway, ctx)?;
 
                 self.registry
-                    .update_device(gateway, Default::default())
+                    .update_device(&gateway, Default::default())
                     .await
                     .map_err(ReconcileError::temporary)?;
 

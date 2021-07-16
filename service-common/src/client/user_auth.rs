@@ -1,6 +1,6 @@
 use crate::{defaults, openid::TokenConfig};
 use drogue_client::{
-    error::{ClientError, ErrorInformation},
+    error::ClientError,
     openid::{OpenIdTokenProvider, TokenInjector},
     Context,
 };
@@ -62,29 +62,6 @@ impl UserAuthClient {
         )
     }
 
-    async fn default_error<T>(
-        code: StatusCode,
-        response: Response,
-    ) -> Result<T, ClientError<reqwest::Error>> {
-        match response.json::<ErrorInformation>().await {
-            Ok(result) => {
-                log::debug!("Service reported error ({}): {}", code, result);
-                Err(ClientError::Service(result))
-            }
-            Err(err) => {
-                log::debug!(
-                    "Service call failed ({}). Result couldn't be decoded: {:?}",
-                    code,
-                    err
-                );
-                Err(ClientError::Request(format!(
-                    "Failed to decode service error response: {}",
-                    err
-                )))
-            }
-        }
-    }
-
     pub async fn authenticate_api_key(
         &self,
         request: AuthenticationRequest,
@@ -116,7 +93,7 @@ impl UserAuthClient {
                     )))
                 }
             },
-            code => Self::default_error(code, response).await,
+            code => super::default_error(code, response).await,
         }
     }
 
@@ -151,7 +128,7 @@ impl UserAuthClient {
                     )))
                 }
             },
-            code => Self::default_error(code, response).await,
+            code => super::default_error(code, response).await,
         }
     }
 }

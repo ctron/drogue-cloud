@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Clone, Debug, Error)]
+#[derive(Clone, Debug, Error, PartialEq, Eq)]
 pub enum ReconcileError {
     #[error("Reconciliation failed with a permanent error: {0}")]
     Permanent(String),

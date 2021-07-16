@@ -1304,7 +1304,7 @@ checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 [[package]]
 name = "drogue-client"
 version = "0.7.0"
-source = "git+https://github.com/drogue-iot/drogue-client?rev=9520f636a9a392d9b4ee6e78f41a9edfb09237bc#9520f636a9a392d9b4ee6e78f41a9edfb09237bc"
+source = "git+https://github.com/drogue-iot/drogue-client?rev=0938c7fd8a7a41019651b21cbcda846e4a0d8b69#0938c7fd8a7a41019651b21cbcda846e4a0d8b69"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1821,12 +1821,15 @@ name = "drogue-cloud-operator-common"
 version = "0.6.0"
 dependencies = [
  "async-trait",
+ "chrono",
+ "drogue-client",
  "kube",
  "log",
  "reqwest",
  "serde 1.0.126",
  "serde_json",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
@@ -1934,6 +1937,7 @@ dependencies = [
  "http",
  "humantime 2.1.0",
  "humantime-serde",
+ "k8s-openapi",
  "kube",
  "log",
  "ntex",
@@ -1965,14 +1969,13 @@ dependencies = [
 
 [[package]]
 name = "drogue-cloud-topic-operator"
-version = "0.0.0"
+version = "0.7.0"
 dependencies = [
  "actix-http",
  "actix-web",
  "actix-web-httpauth",
  "anyhow",
  "async-trait",
- "bcrypt",
  "chrono",
  "cloudevents-sdk 0.4.0",
  "config 0.10.1",
@@ -1995,9 +1998,11 @@ dependencies = [
  "lazy_static",
  "log",
  "maplit",
+ "md5",
  "operator-framework",
  "pem",
  "rand 0.7.3",
+ "regex",
  "reqwest",
  "rust-crypto",
  "serde 1.0.126",
@@ -3511,7 +3516,7 @@ dependencies = [
 [[package]]
 name = "operator-framework"
 version = "0.5.0"
-source = "git+https://github.com/ctron/operator-framework?rev=12b889e208c86ae50bb6d9a9cfc327aa5083f2bc#12b889e208c86ae50bb6d9a9cfc327aa5083f2bc"
+source = "git+https://github.com/ctron/operator-framework?rev=b2b0fc88beca2deb07bad6a963d0d5322c9ddff8#b2b0fc88beca2deb07bad6a963d0d5322c9ddff8"
 dependencies = [
  "anyhow",
  "async-trait",

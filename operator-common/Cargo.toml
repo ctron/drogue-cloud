@@ -13,3 +13,9 @@ serde = { version = "1", optional = true }
 serde_json = { version = "1", optional = true }
 reqwest = { version = "0.11", optional = true }
 kube = { version = "0.58", optional = true }
+
+drogue-client = "0.7"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+chrono = "0.4"

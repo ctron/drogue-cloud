@@ -9,7 +9,9 @@ use crate::{
     ttn,
 };
 use drogue_client::{meta, registry, Translator};
-use drogue_cloud_operator_common::controller::reconciler::{ReconcileError, ReconcileProcessor};
+use drogue_cloud_operator_common::controller::reconciler::{
+    ReconcileError, ReconcileProcessor, ReconcilerOutcome,
+};
 use url::Url;
 
 pub struct Controller {
@@ -42,7 +44,7 @@ impl Controller {
         log::debug!("Reconcile device: {:#?}", device);
 
         if let (Some(app), Some(mut device)) = (app, device) {
-            let device = ReconcileProcessor(DeviceReconciler { ttn: &self.ttn })
+            let result = ReconcileProcessor(DeviceReconciler { ttn: &self.ttn })
                 .reconcile((app, device.clone()))
                 .await
                 .or_else::<ReconcileError, _>(|err| {
@@ -53,12 +55,15 @@ impl Controller {
                         status
                     })?;
 
-                    Ok(device)
+                    Ok(ReconcilerOutcome::Complete(device))
                 })?;
 
-            log::debug!("Storing: {:#?}", device);
+            log::debug!("Storing: {:#?}", result);
+
+            let (device, retry) = result.split();
+
             self.registry
-                .update_device(device, Default::default())
+                .update_device(&device, Default::default())
                 .await?;
         } else {
             // If application and/or device are missing, we have nothing to do. As we have
@@ -91,10 +96,13 @@ impl Controller {
                     status
                 })?;
 
-                Ok(app)
+                Ok(ReconcilerOutcome::Complete(app))
             })?;
+
+            let (app, retry) = app.split();
+
             log::debug!("Storing: {:#?}", app);
-            self.registry.update_app(app, Default::default()).await?;
+            self.registry.update_app(&app, Default::default()).await?;
         } else {
             // If the application is just gone, we can ignore this, as we have finalizers
             // to guard against this.

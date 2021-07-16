@@ -1,6 +1,6 @@
 [package]
 name = "drogue-cloud-topic-operator"
-version = "0.0.0"
+version = "0.7.0"
 authors = ["Jens Reimann <jreimann@redhat.com>"]
 edition = "2018"
 
@@ -41,6 +41,8 @@ chrono = { version = "0.4", features = ["serde"] }
 pem = "0.8"
 x509-parser = "0.9"
 reqwest = "0.11"
+regex = "1"
+md5 = "0.7"
 
 drogue-cloud-database-common = { path = "../database-common" }
 drogue-cloud-service-common = { path = "../service-common" }
@@ -49,9 +51,8 @@ drogue-cloud-registry-events = { path = "../registry-events" }
 drogue-cloud-operator-common = { path = "../operator-common", features = ["reqwest", "serde_json", "kube"] }
 
 drogue-client = "0.7.0"
-bcrypt = "0.9"
 
 kube = "0.58"
 kube-derive = "0.58"
-k8s-openapi = { version = "0.12", features = ["v1_17"] }
+k8s-openapi = { version = "0.12", features = ["v1_19"] }
 operator-framework = "0.5.0"
